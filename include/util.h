@@ -8,22 +8,7 @@
 #include <Eigen/Dense>
 
 // TODO(rzfeng): change
-const size_t kNumDofs = 2;
-
-struct MacroAction {
-    std::vector<Eigen::VectorXd> path;
-    size_t type;
-
-    MacroAction(const std::vector<Eigen::VectorXd>& path_in, size_t type_in)
-               : path(path_in), type(type_in) {}
-};
-
-inline double ClampRadians(double theta) {
-    theta = fmod(theta, 2.0*M_PI);
-    if(theta < -M_PI) theta += 2.0*M_PI;
-    else if(theta >= M_PI) theta -= 2.0*M_PI;
-    return theta;
-}
+const size_t kNumDofs = 7;
 
 inline void PrintPath(const std::vector<Eigen::VectorXd>&path) {
     for(const auto& q : path) {
@@ -33,6 +18,35 @@ inline void PrintPath(const std::vector<Eigen::VectorXd>&path) {
             if(i < q.size()-1) std::cout << ", ";
         }
         std::cout << ")\n";
+    }
+}
+
+// TODO(rzfeng): think about adding name
+struct MacroAction {
+    std::vector<Eigen::VectorXd> path;
+    size_t type;
+
+    MacroAction(const std::vector<Eigen::VectorXd>& path_in, size_t type_in)
+               : path(path_in), type(type_in) {}
+
+    void Print() {
+        std::cout << "Macro-Action " << type << ":" << '\n';
+        PrintPath(path);
+    }
+};
+
+inline double ClampRadians(double theta) {
+    theta = fmod(theta, 2.0*M_PI);
+    if(theta < -M_PI) theta += 2.0*M_PI;
+    else if(theta >= M_PI) theta -= 2.0*M_PI;
+    return theta;
+}
+
+inline bool StrEndsWith(const std::string &str, const std::string& ending) {
+    if (str.length() >= ending.length()) {
+        return str.compare (str.length() - ending.length(), ending.length(), ending) == 0;
+    } else {
+        return false;
     }
 }
 

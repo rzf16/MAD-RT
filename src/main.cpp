@@ -3,47 +3,71 @@
 #include <dirent.h>
 #include <vector>
 #include <string>
+#include <sstream>
+#include <utility>
 #include <Eigen/Dense>
+#include <ctime>
 #include "mad_rt.h"
 #include "util.h"
 
+const std::string MACRO_ACTION_DIR = "config/macro_actions/";
+
+std::pair<MacroAction, std::string> ReadMacroAction(const std::string& filename, size_t i) {
+    std::string name = filename.substr(0, filename.length()-4);
+
+    std::vector<Eigen::VectorXd> path;
+    std::fstream file(MACRO_ACTION_DIR+filename, std::ios::in);
+    if(file.is_open()) {
+        std::string line;
+        while(getline(file, line)) {
+            Eigen::VectorXd q(kNumDofs);
+            std::string word;
+            std::stringstream str(line);
+            size_t i = 0;
+            while(getline(str, word, ',')) {
+                q(i++) = std::stod(word);
+            }
+            path.push_back(q);
+        }
+    }
+
+    return std::make_pair(MacroAction(path, i), name);
+}
+
 int main() {
+    // Seed randomness
+    srand((unsigned int)time(NULL));
+
     std::vector<MacroAction> macro_actions;
-    std::vector<std::string> names = {"X", "Y"};
+    std::vector<std::string> names;
 
-    std::vector<Eigen::VectorXd> demo;
-    Eigen::VectorXd pt(2);
-    pt << 0.0, 0.0;
-    demo.push_back(pt);
-    pt(0) = 1.0;
-    demo.push_back(pt);
-    pt(0) = 2.0;
-    demo.push_back(pt);
-    pt(0) = 3.0;
-    demo.push_back(pt);
-    pt(0) = 4.0;
-    demo.push_back(pt);
-    macro_actions.push_back(MacroAction(demo, 0));
+    // Read in macro-actions
+    DIR *dir;
+    struct dirent *ent;
+    if((dir = opendir(MACRO_ACTION_DIR.c_str())) != NULL) {
+        size_t i = 0;
+        while((ent = readdir (dir)) != NULL) {
+            std::string filename(ent->d_name);
+            if(StrEndsWith(filename, ".csv")) {
+                auto info = ReadMacroAction(filename, i++);
+                macro_actions.push_back(info.first);
+                names.push_back(info.second);
+            }
+        }
+        closedir(dir);
+    }
+    else {
+        std::cout << "[Main] Failed to open macro-action directory" << '\n';
+        return 1;
+    }
 
-    pt(0) = 0.0;
-    pt(1) = 0.0;
-    demo[0] = pt;
-    pt(1) = 1.0;
-    demo[1] = pt;
-    pt(1) = 2.0;
-    demo[2] = pt;
-    pt(1) = 3.0;
-    demo[3] = pt;
-    pt(1) = 4.0;
-    demo[4] = pt;
-    macro_actions.push_back(MacroAction(demo, 0));
+    MAD_RT planner(macro_actions, names);
 
-    MAD_RT planner = MAD_RT(macro_actions, names);
+    Eigen::VectorXd start(7);
+    start << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
 
-    Eigen::VectorXd start(2);
-    start << 2.0, 3.0;
-    Eigen::VectorXd goal(2);
-    goal << 35.0, 38.0;
+    Eigen::VectorXd goal(7);
+    goal << 35.0, 38.0, 3.3, 14.8, 1.18, 16.78, 25.4;
 
     auto path = planner.plan(start, goal);
     PrintPath(path);

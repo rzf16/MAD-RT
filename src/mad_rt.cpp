@@ -80,8 +80,8 @@ std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
         std::cout << "[MAD_RT] Sampled node " << node_id << '\n';
 
         // TODO(rzfeng): actually do this
-        Eigen::VectorXd observation_heuristic(macro_actions_.size());
-        observation_heuristic << 1.0, 1.0;
+        // Eigen::VectorXd observation_heuristic(macro_actions_.size());
+        Eigen::VectorXd observation_heuristic = Eigen::VectorXd::Constant(macro_actions_.size(), 1.0);
 
         size_t action_type;
         // Use only observation heuristic if no previous action
@@ -138,21 +138,34 @@ std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
             std::cout << "[MAD_RT] Found a path!" << '\n';
 
             std::vector<Eigen::VectorXd> motion_plan;
+            std::vector<size_t> macro_action_seq;
             size_t current_id = nodes_.size()-1;
             while(nodes_[current_id].parent != std::numeric_limits<size_t>::max()) {
                 // Macro-actions are forward but overall path is backwards, so reverse macro-actions
                 motion_plan.insert(motion_plan.end(), nodes_[current_id].action.path.rbegin(),
                                    nodes_[current_id].action.path.rend());
+                macro_action_seq.push_back(nodes_[current_id].action.type);
                 current_id = nodes_[current_id].parent;
             }
             // We don't have to add the start node, since macro-actions are stored with the end node
             std::reverse(motion_plan.begin(), motion_plan.end());
+            std::reverse(macro_action_seq.begin(), macro_action_seq.end());
+
+            // DEBUG
+            std::cout << "[MAD_RT] Macro-Action Sequence: ";
+            for(size_t i = 0; i < macro_action_seq.size(); ++i) {
+                std::cout << names_[macro_action_seq[i]];
+                if(i < macro_action_seq.size()-1) std::cout << ", ";
+            }
+            std::cout << '\n';
+
             return motion_plan;
         }
 
         std::chrono::steady_clock::time_point tock = std::chrono::steady_clock::now();
         std::chrono::duration<double> diff = tock - tick;
         elapsed = diff.count();
+        std::cout << '\n';
     }
 
     std::cout << "[MAD-RT] Failed to find a path D:" << '\n';
