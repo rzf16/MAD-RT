@@ -7,7 +7,6 @@
 #include <math.h>
 #include <Eigen/Dense>
 
-// TODO(rzfeng): change
 const size_t kNumDofs = 7;
 
 inline void PrintPath(const std::vector<Eigen::VectorXd>&path) {
@@ -21,7 +20,6 @@ inline void PrintPath(const std::vector<Eigen::VectorXd>&path) {
     }
 }
 
-// TODO(rzfeng): think about adding name
 struct MacroAction {
     std::vector<Eigen::VectorXd> path;
     size_t type;

@@ -67,7 +67,7 @@ int main() {
     start << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
 
     Eigen::VectorXd goal(7);
-    goal << 35.0, 38.0, 3.3, 14.8, 1.18, 16.78, 25.4;
+    goal << 1.114, -2.056, -0.3538, -1.48, 1.18, 1.678, 2.54;
 
     auto path = planner.plan(start, goal);
     PrintPath(path);

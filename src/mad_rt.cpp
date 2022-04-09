@@ -181,7 +181,11 @@ std::vector<Eigen::VectorXd> MAD_RT::Morph(const std::vector<Eigen::VectorXd>& p
     for(size_t i = 0; i < path.size(); ++i) {
         // TODO(rzfeng): clamp radians
         double t = double(i) / double(path.size()-1);
-        morphed.push_back(path[i] + t*shear + shift);
+        Eigen::VectorXd q = path[i] + t*shear + shift;
+        for(size_t i = 0; i < q.size(); ++i) {
+            q(i) = ClampRadians(q(i));
+        }
+        morphed.push_back(q);
     }
     return morphed;
 }
