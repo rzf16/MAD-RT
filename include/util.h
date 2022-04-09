@@ -1,6 +1,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <iostream>
 #include <string>
 #include <vector>
 #include <math.h>
@@ -22,6 +23,17 @@ inline double ClampRadians(double theta) {
     if(theta < -M_PI) theta += 2.0*M_PI;
     else if(theta >= M_PI) theta -= 2.0*M_PI;
     return theta;
+}
+
+inline void PrintPath(const std::vector<Eigen::VectorXd>&path) {
+    for(const auto& q : path) {
+        std::cout << "(";
+        for(size_t i = 0; i < q.size(); ++i) {
+            std::cout << q(i);
+            if(i < q.size()-1) std::cout << ", ";
+        }
+        std::cout << ")\n";
+    }
 }
 
 #endif // UTIL_H

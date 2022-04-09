@@ -9,6 +9,7 @@
 
 int main() {
     std::vector<MacroAction> macro_actions;
+    std::vector<std::string> names = {"X", "Y"};
 
     std::vector<Eigen::VectorXd> demo;
     Eigen::VectorXd pt(2);
@@ -37,8 +38,6 @@ int main() {
     demo[4] = pt;
     macro_actions.push_back(MacroAction(demo, 0));
 
-    std::vector<std::string> names = {"X", "Y"};
-
     MAD_RT planner = MAD_RT(macro_actions, names);
 
     Eigen::VectorXd start(2);
@@ -47,7 +46,5 @@ int main() {
     goal << 35.0, 38.0;
 
     auto path = planner.plan(start, goal);
-    for(const auto &q : path) {
-        std::cout << q << '\n' << '\n';
-    }
+    PrintPath(path);
 }
