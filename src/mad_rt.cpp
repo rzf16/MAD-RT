@@ -225,8 +225,3 @@ size_t MAD_RT::SampleNode() {
     node_weights_[node_id] = CalcNodeWeight(nodes_[node_id]);
     return node_id;
 }
-
-// Computes the distance between two configurations
-double MAD_RT::CalcDistance(const Eigen::VectorXd& q1, const Eigen::VectorXd& q2) const {
-    return (q1 - q2).norm();
-}

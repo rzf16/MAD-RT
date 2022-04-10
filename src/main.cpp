@@ -71,4 +71,5 @@ int main() {
 
     auto path = planner.plan(start, goal);
     PrintPath(path);
+    std::cout << "Path length: " << CalcPathLength(path) << '\n';
 }

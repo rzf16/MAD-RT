@@ -68,9 +68,6 @@ private:
     // Samples a node from the tree
     size_t SampleNode();
 
-    // Computes the distance between two configurations
-    double CalcDistance(const Eigen::VectorXd& q1, const Eigen::VectorXd& q2) const;
-
     const std::vector<MacroAction> macro_actions_;
     const std::vector<std::string> names_;
 
