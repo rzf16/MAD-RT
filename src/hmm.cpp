@@ -19,8 +19,9 @@ void HMM::UpdateTransitions(const std::vector<size_t>& sequence) {
             continue;
         }
 
-        transition_counts_(i, i+1) += 1;
+        transition_counts_(sequence[i], sequence[i+1]) += 1;
     }
+    std::cout << transition_counts_ << '\n';
 }
 
 // Samples a new macro-action given the previous macro-action and the observation heuristic
@@ -33,7 +34,7 @@ size_t HMM::SampleMacroAction(size_t prev, const Eigen::VectorXd& observation_he
 
     // TODO(rzfeng): add a check for observation heuristic shape
 
-    Eigen::VectorXd transition_probs = transition_counts_.col(prev);
+    Eigen::VectorXd transition_probs = transition_counts_.row(prev);
     transition_probs /= transition_probs.sum();
 
     Eigen::VectorXd observation_probs = observation_heuristic / observation_heuristic.sum();

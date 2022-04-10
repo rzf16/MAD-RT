@@ -138,6 +138,7 @@ std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
             std::chrono::duration<double> diff = tock - tick;
             elapsed = diff.count();
             // DEBUG
+            std::cout << '\n';
             std::cout << "[MAD_RT] Found a path in " << elapsed << " seconds!" << '\n';
 
             std::vector<Eigen::VectorXd> motion_plan;
