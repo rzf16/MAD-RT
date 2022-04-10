@@ -3,18 +3,22 @@
 #include "smoothing.h"
 #include "util.h"
 
-ShortcutSmoother::ShortcutSmoother(double step_size_in) : step_size(step_size_in) {}
+// TODO(tweiheng): pass in pointers to planning scene & joint model group
+ShortcutSmoother::ShortcutSmoother(StateValidityChecker* const state_validity_checker_in,
+                                   double step_size_in)
+                                   : state_validity_checker_(state_validity_checker_in),
+                                     step_size_(step_size_in) {}
 
 // Smooth a path for the given number of iterations
 void ShortcutSmoother::Smooth(std::vector<Eigen::VectorXd>& path, size_t num_iterations) {
     for(size_t i = 0; i < num_iterations; ++i) {
         std::uniform_int_distribution<int> distribution(0, path.size()-1);
-        size_t a = distribution(rng);
-        size_t b = distribution(rng);
+        size_t a = distribution(rng_);
+        size_t b = distribution(rng_);
         // Keep sampling until they are different
         while(a == b) {
-            a = distribution(rng);
-            b = distribution(rng);
+            a = distribution(rng_);
+            b = distribution(rng_);
         }
 
         if(a < b) StepBetweenStates(path, a, b);
@@ -25,14 +29,14 @@ void ShortcutSmoother::Smooth(std::vector<Eigen::VectorXd>& path, size_t num_ite
 // Step between states a < b
 void ShortcutSmoother::StepBetweenStates(std::vector<Eigen::VectorXd>& path, size_t a, size_t b) {
     double dist = CalcDistance(path[a], path[b]);
-    Eigen::VectorXd step = ((path[b] - path[a]) / dist) * step_size;
-    size_t num_steps = ceil(dist / step_size);
+    Eigen::VectorXd step = ((path[b] - path[a]) / dist) * step_size_;
+    size_t num_steps = ceil(dist / step_size_);
 
     std::vector<Eigen::VectorXd> shortcut;
     Eigen::VectorXd current = path[a];
     for(size_t i = 0; i < num_steps; ++i) {
         current = (i == num_steps-1) ? path[b] : current + step;
-        // TODO(rzfeng): add a state validity check
+        if(!state_validity_checker_->CheckValidity(current)) return;
         shortcut.push_back(current);
     }
 

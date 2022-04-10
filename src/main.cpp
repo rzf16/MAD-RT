@@ -10,6 +10,7 @@
 #include "mad_rt.h"
 #include "util.h"
 #include "smoothing.h"
+#include "state_validity.h"
 
 const std::string MACRO_ACTION_DIR = "config/macro_actions/";
 
@@ -62,7 +63,11 @@ int main() {
         return 1;
     }
 
-    MAD_RT planner(macro_actions, names);
+    // TODO(tweiheng): initialize MoveIt stuff
+    // TODO(tweiheng): initialize a StateValidityChecker
+    StateValidityChecker state_validity_checker;
+
+    MAD_RT planner(macro_actions, names, &state_validity_checker);
 
     Eigen::VectorXd start(7);
     start << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
@@ -73,7 +78,7 @@ int main() {
     auto path = planner.plan(start, goal);
     std::cout << "Unsmoothed length: " << CalcPathLength(path) << '\n';
 
-    ShortcutSmoother smoother;
+    ShortcutSmoother smoother(&state_validity_checker);
     smoother.Smooth(path);
     std::cout << "Smoothed length: " << CalcPathLength(path) << '\n';
 

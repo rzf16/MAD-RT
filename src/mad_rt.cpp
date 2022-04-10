@@ -5,9 +5,11 @@
 #include <random>
 #include <limits>
 #include "mad_rt.h"
+#include "state_validity.h"
 
 MAD_RT::MAD_RT(const std::vector<MacroAction>& macro_actions_in,
                const std::vector<std::string>& names_in,
+               StateValidityChecker* const state_validity_checker_in,
                double goal_eps_in,
                double goal_bias_in,
                double trunc_min_in,
@@ -16,17 +18,18 @@ MAD_RT::MAD_RT(const std::vector<MacroAction>& macro_actions_in,
                const Eigen::VectorXd& malleability_in)
               : macro_actions_(macro_actions_in),
                 names_(names_in),
+                state_validity_checker_(state_validity_checker_in),
                 hmm_(HMM(macro_actions_in.size())),
                 goal_eps_(goal_eps_in),
                 goal_bias_(goal_bias_in),
                 trunc_min_(trunc_min_in),
                 trunc_max_(trunc_max_in),
                 count_penalty_(count_penalty_in),
-                malleability_(malleability_in) {
-}
+                malleability_(malleability_in) {}
 
 MAD_RT::MAD_RT(const std::vector<MacroAction>& macro_actions_in,
                const std::vector<std::string>& names_in,
+               StateValidityChecker* const state_validity_checker_in,
                const Eigen::MatrixXd& init_transition_counts,
                double goal_eps_in,
                double goal_bias_in,
@@ -36,14 +39,14 @@ MAD_RT::MAD_RT(const std::vector<MacroAction>& macro_actions_in,
                const Eigen::VectorXd& malleability_in)
               : macro_actions_(macro_actions_in),
                 names_(names_in),
+                state_validity_checker_(state_validity_checker_in),
                 hmm_(HMM(macro_actions_in.size(), init_transition_counts)),
                 goal_eps_(goal_eps_in),
                 goal_bias_(goal_bias_in),
                 trunc_min_(trunc_min_in),
                 trunc_max_(trunc_max_in),
                 count_penalty_(count_penalty_in),
-                malleability_(malleability_in) {
-}
+                malleability_(malleability_in) {}
 
 // Plans a path from start to goal
 std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
@@ -88,7 +91,7 @@ std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
         if(nodes_[node_id].parent == std::numeric_limits<size_t>::max()) {
             std::discrete_distribution<size_t> distribution(observation_heuristic.begin(),
                                                             observation_heuristic.end());
-            action_type = distribution(rng);
+            action_type = distribution(rng_);
         }
         else {
             // action_type = hmm_.SampleMacroAction(nodes_[nodes_[node_id].parent].action.type,
@@ -116,7 +119,7 @@ std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
 
             // Truncate macro-action
             std::uniform_real_distribution<double> distribution(trunc_min_, trunc_max_);
-            double trunc = distribution(rng);
+            double trunc = distribution(rng_);
             size_t trunc_size = ceil(macro_actions_[action_type].path.size() * trunc);
             if(trunc_size < 2) trunc_size = 2;
 
@@ -127,43 +130,54 @@ std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
             path = Morph(path, shear_shift[0], shear_shift[1]);
         }
 
-        // TODO(rzfeng): collision and joint limit check
-
-        // TODO(rzfeng): put all this in an if for collision check
-        nodes_.push_back(MAD_RT_Node(path, action_type, node_id));
-        node_weights_.push_back(1.0);
-
-        if(CalcDistance(path.back(), goal) < goal_eps_) {
-            std::chrono::steady_clock::time_point tock = std::chrono::steady_clock::now();
-            std::chrono::duration<double> diff = tock - tick;
-            elapsed = diff.count();
-            // DEBUG
-            std::cout << '\n';
-            std::cout << "[MAD_RT] Found a path in " << elapsed << " seconds!" << '\n';
-
-            std::vector<Eigen::VectorXd> motion_plan;
-            std::vector<size_t> macro_action_seq;
-            size_t current_id = nodes_.size()-1;
-            while(nodes_[current_id].parent != std::numeric_limits<size_t>::max()) {
-                // Macro-actions are forward but overall path is backwards, so reverse macro-actions
-                motion_plan.insert(motion_plan.end(), nodes_[current_id].action.path.rbegin(),
-                                   nodes_[current_id].action.path.rend());
-                macro_action_seq.push_back(nodes_[current_id].action.type);
-                current_id = nodes_[current_id].parent;
+        bool valid = true;
+        for(const auto& q : path) {
+            if(!state_validity_checker_->CheckValidity(q)) {
+                valid = false;
+                break;
             }
-            // We don't have to add the start node, since macro-actions are stored with the end node
-            std::reverse(motion_plan.begin(), motion_plan.end());
-            std::reverse(macro_action_seq.begin(), macro_action_seq.end());
+        }
 
-            // DEBUG
-            std::cout << "[MAD_RT] Macro-Action Sequence: ";
-            for(size_t i = 0; i < macro_action_seq.size(); ++i) {
-                std::cout << names_[macro_action_seq[i]];
-                if(i < macro_action_seq.size()-1) std::cout << ", ";
+        if(valid) {
+            nodes_.push_back(MAD_RT_Node(path, action_type, node_id));
+            node_weights_.push_back(1.0);
+
+            if(CalcDistance(path.back(), goal) < goal_eps_) {
+                std::chrono::steady_clock::time_point tock = std::chrono::steady_clock::now();
+                std::chrono::duration<double> diff = tock - tick;
+                elapsed = diff.count();
+                // DEBUG
+                std::cout << '\n';
+                std::cout << "[MAD_RT] Found a path in " << elapsed << " seconds!" << '\n';
+
+                std::vector<Eigen::VectorXd> motion_plan;
+                std::vector<size_t> macro_action_seq;
+                size_t current_id = nodes_.size()-1;
+                while(nodes_[current_id].parent != std::numeric_limits<size_t>::max()) {
+                    // Macro-actions are forward but overall path is backwards, so reverse macro-actions
+                    motion_plan.insert(motion_plan.end(), nodes_[current_id].action.path.rbegin(),
+                                       nodes_[current_id].action.path.rend());
+                    macro_action_seq.push_back(nodes_[current_id].action.type);
+                    current_id = nodes_[current_id].parent;
+                }
+                // We don't have to add the start node, since macro-actions are stored with the end node
+                std::reverse(motion_plan.begin(), motion_plan.end());
+                std::reverse(macro_action_seq.begin(), macro_action_seq.end());
+                hmm_.UpdateTransitions(macro_action_seq);
+
+                // DEBUG
+                std::cout << "[MAD_RT] Macro-Action Sequence: ";
+                for(size_t i = 0; i < macro_action_seq.size(); ++i) {
+                    std::cout << names_[macro_action_seq[i]];
+                    if(i < macro_action_seq.size()-1) std::cout << ", ";
+                }
+                std::cout << '\n';
+
+                return motion_plan;
             }
-            std::cout << '\n';
-
-            return motion_plan;
+        }
+        else {
+            std::cout << "[MAD_RT] Invalid state!" << '\n';
         }
 
         std::chrono::steady_clock::time_point tock = std::chrono::steady_clock::now();
@@ -224,7 +238,7 @@ double MAD_RT::CalcNodeWeight(const MAD_RT_Node& node) const {
 // Samples a node from the tree
 size_t MAD_RT::SampleNode() {
     std::discrete_distribution<size_t> distribution(node_weights_.begin(), node_weights_.end());
-    size_t node_id = distribution(rng);
+    size_t node_id = distribution(rng_);
     ++nodes_[node_id].sample_count;
     node_weights_[node_id] = CalcNodeWeight(nodes_[node_id]);
     return node_id;

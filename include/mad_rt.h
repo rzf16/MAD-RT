@@ -7,6 +7,7 @@
 #include <random>
 #include <Eigen/Dense>
 #include "hmm.h"
+#include "state_validity.h"
 #include "util.h"
 
 class MAD_RT {
@@ -14,6 +15,7 @@ public:
     // TODO(rzfeng): decide if we want to truncate by proportion or length
     MAD_RT(const std::vector<MacroAction>& macro_actions_in,
            const std::vector<std::string>& names_in,
+           StateValidityChecker* const state_validity_checker_in,
            double goal_eps_in=0.01,
            double goal_bias_in=0.05,
            double trunc_min_in=0.4,
@@ -23,6 +25,7 @@ public:
 
     MAD_RT(const std::vector<MacroAction>& macro_actions_in,
            const std::vector<std::string>& names_in,
+           StateValidityChecker* const state_validity_checker_in,
            const Eigen::MatrixXd& init_transition_counts,
            double goal_eps_in=0.01,
            double goal_bias_in=0.05,
@@ -71,6 +74,8 @@ private:
     const std::vector<MacroAction> macro_actions_;
     const std::vector<std::string> names_;
 
+    StateValidityChecker* const state_validity_checker_;
+
     // TODO(rzfeng): could be super inefficient, may need to replace with a better data structure
     std::vector<MAD_RT_Node> nodes_;
     std::vector<double> node_weights_;
@@ -84,7 +89,7 @@ private:
     double count_penalty_;
     Eigen::VectorXd malleability_;
 
-    std::default_random_engine rng;
+    std::default_random_engine rng_;
 };
 
 #endif // MAD_RT_H

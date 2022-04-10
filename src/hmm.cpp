@@ -21,7 +21,6 @@ void HMM::UpdateTransitions(const std::vector<size_t>& sequence) {
 
         transition_counts_(sequence[i], sequence[i+1]) += 1;
     }
-    std::cout << transition_counts_ << '\n';
 }
 
 // Samples a new macro-action given the previous macro-action and the observation heuristic
