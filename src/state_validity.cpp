@@ -5,7 +5,7 @@
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
 
 // TODO(tweiheng): init with pointers to planning scene & joint model group
-StateValidityChecker::StateValidityChecker(planning_scene::PlanningScene ps) {
+StateValidityChecker::StateValidityChecker(planning_scene::PlanningScene *ps) {
     planning_scene = ps;
 }
 
