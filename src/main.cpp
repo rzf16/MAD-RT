@@ -9,6 +9,7 @@
 #include <ctime>
 #include "mad_rt.h"
 #include "util.h"
+#include "smoothing.h"
 
 const std::string MACRO_ACTION_DIR = "config/macro_actions/";
 
@@ -70,6 +71,11 @@ int main() {
     goal << 1.114, -2.056, -0.3538, -1.48, 1.18, 1.678, 2.54;
 
     auto path = planner.plan(start, goal);
+    std::cout << "Unsmoothed length: " << CalcPathLength(path) << '\n';
+
+    ShortcutSmoother smoother;
+    smoother.Smooth(path);
+    std::cout << "Smoothed length: " << CalcPathLength(path) << '\n';
+
     PrintPath(path);
-    std::cout << "Path length: " << CalcPathLength(path) << '\n';
 }

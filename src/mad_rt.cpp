@@ -134,8 +134,11 @@ std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
         node_weights_.push_back(1.0);
 
         if(CalcDistance(path.back(), goal) < goal_eps_) {
+            std::chrono::steady_clock::time_point tock = std::chrono::steady_clock::now();
+            std::chrono::duration<double> diff = tock - tick;
+            elapsed = diff.count();
             // DEBUG
-            std::cout << "[MAD_RT] Found a path!" << '\n';
+            std::cout << "[MAD_RT] Found a path in " << elapsed << " seconds!" << '\n';
 
             std::vector<Eigen::VectorXd> motion_plan;
             std::vector<size_t> macro_action_seq;
