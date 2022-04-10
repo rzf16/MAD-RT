@@ -9,16 +9,11 @@
 
 const size_t kNumDofs = 7;
 
-inline void PrintPath(const std::vector<Eigen::VectorXd>&path) {
-    for(const auto& q : path) {
-        std::cout << "(";
-        for(size_t i = 0; i < q.size(); ++i) {
-            std::cout << q(i);
-            if(i < q.size()-1) std::cout << ", ";
-        }
-        std::cout << ")\n";
-    }
-}
+void PrintPath(const std::vector<Eigen::VectorXd>&path);
+
+double ClampRadians(double theta);
+
+bool StrEndsWith(const std::string &str, const std::string& ending);
 
 struct MacroAction {
     std::vector<Eigen::VectorXd> path;
@@ -32,20 +27,5 @@ struct MacroAction {
         PrintPath(path);
     }
 };
-
-inline double ClampRadians(double theta) {
-    theta = fmod(theta, 2.0*M_PI);
-    if(theta < -M_PI) theta += 2.0*M_PI;
-    else if(theta >= M_PI) theta -= 2.0*M_PI;
-    return theta;
-}
-
-inline bool StrEndsWith(const std::string &str, const std::string& ending) {
-    if (str.length() >= ending.length()) {
-        return str.compare (str.length() - ending.length(), ending.length(), ending) == 0;
-    } else {
-        return false;
-    }
-}
 
 #endif // UTIL_H
