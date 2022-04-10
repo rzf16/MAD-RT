@@ -61,6 +61,8 @@ int main() {
         return 1;
     }
 
+    // TODO(tweiheng): initialize MoveIt stuff
+    // TODO(tweiheng): pass in pointers to planning scene & joint model group
     MAD_RT planner(macro_actions, names);
 
     Eigen::VectorXd start(7);

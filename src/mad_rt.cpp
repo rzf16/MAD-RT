@@ -5,9 +5,11 @@
 #include <random>
 #include <limits>
 #include "mad_rt.h"
+#include "state_validity.h"
 
 MAD_RT::MAD_RT(const std::vector<MacroAction>& macro_actions_in,
                const std::vector<std::string>& names_in,
+               // TODO(tweiheng): pass in pointers to planning scene & joint model group
                double goal_eps_in,
                double goal_bias_in,
                double trunc_min_in,
@@ -16,6 +18,7 @@ MAD_RT::MAD_RT(const std::vector<MacroAction>& macro_actions_in,
                const Eigen::VectorXd& malleability_in)
               : macro_actions_(macro_actions_in),
                 names_(names_in),
+                // TODO(tweiheng): init state_validity_checker_ with pointers to planning scene & joint model group
                 hmm_(HMM(macro_actions_in.size())),
                 goal_eps_(goal_eps_in),
                 goal_bias_(goal_bias_in),
@@ -27,6 +30,7 @@ MAD_RT::MAD_RT(const std::vector<MacroAction>& macro_actions_in,
 
 MAD_RT::MAD_RT(const std::vector<MacroAction>& macro_actions_in,
                const std::vector<std::string>& names_in,
+               // TODO(tweiheng): pass in pointers to planning scene & joint model group
                const Eigen::MatrixXd& init_transition_counts,
                double goal_eps_in,
                double goal_bias_in,
@@ -36,6 +40,7 @@ MAD_RT::MAD_RT(const std::vector<MacroAction>& macro_actions_in,
                const Eigen::VectorXd& malleability_in)
               : macro_actions_(macro_actions_in),
                 names_(names_in),
+                // TODO(tweiheng): init state_validity_checker_ with pointers to planning scene & joint model group
                 hmm_(HMM(macro_actions_in.size(), init_transition_counts)),
                 goal_eps_(goal_eps_in),
                 goal_bias_(goal_bias_in),
@@ -128,38 +133,49 @@ std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
         }
 
         // TODO(rzfeng): collision and joint limit check
-
-        // TODO(rzfeng): put all this in an if for collision check
-        nodes_.push_back(MAD_RT_Node(path, action_type, node_id));
-        node_weights_.push_back(1.0);
-
-        if(CalcDistance(path.back(), goal) < goal_eps_) {
-            // DEBUG
-            std::cout << "[MAD_RT] Found a path!" << '\n';
-
-            std::vector<Eigen::VectorXd> motion_plan;
-            std::vector<size_t> macro_action_seq;
-            size_t current_id = nodes_.size()-1;
-            while(nodes_[current_id].parent != std::numeric_limits<size_t>::max()) {
-                // Macro-actions are forward but overall path is backwards, so reverse macro-actions
-                motion_plan.insert(motion_plan.end(), nodes_[current_id].action.path.rbegin(),
-                                   nodes_[current_id].action.path.rend());
-                macro_action_seq.push_back(nodes_[current_id].action.type);
-                current_id = nodes_[current_id].parent;
+        bool valid = true;
+        for(const auto& q : path) {
+            if(!state_validity_checker_.CheckValidity(q)) {
+                valid = false;
+                break;
             }
-            // We don't have to add the start node, since macro-actions are stored with the end node
-            std::reverse(motion_plan.begin(), motion_plan.end());
-            std::reverse(macro_action_seq.begin(), macro_action_seq.end());
+        }
 
-            // DEBUG
-            std::cout << "[MAD_RT] Macro-Action Sequence: ";
-            for(size_t i = 0; i < macro_action_seq.size(); ++i) {
-                std::cout << names_[macro_action_seq[i]];
-                if(i < macro_action_seq.size()-1) std::cout << ", ";
+        if(valid) {
+            nodes_.push_back(MAD_RT_Node(path, action_type, node_id));
+            node_weights_.push_back(1.0);
+
+            if(CalcDistance(path.back(), goal) < goal_eps_) {
+                // DEBUG
+                std::cout << "[MAD_RT] Found a path!" << '\n';
+
+                std::vector<Eigen::VectorXd> motion_plan;
+                std::vector<size_t> macro_action_seq;
+                size_t current_id = nodes_.size()-1;
+                while(nodes_[current_id].parent != std::numeric_limits<size_t>::max()) {
+                    // Macro-actions are forward but overall path is backwards, so reverse macro-actions
+                    motion_plan.insert(motion_plan.end(), nodes_[current_id].action.path.rbegin(),
+                                    nodes_[current_id].action.path.rend());
+                    macro_action_seq.push_back(nodes_[current_id].action.type);
+                    current_id = nodes_[current_id].parent;
+                }
+                // We don't have to add the start node, since macro-actions are stored with the end node
+                std::reverse(motion_plan.begin(), motion_plan.end());
+                std::reverse(macro_action_seq.begin(), macro_action_seq.end());
+
+                // DEBUG
+                std::cout << "[MAD_RT] Macro-Action Sequence: ";
+                for(size_t i = 0; i < macro_action_seq.size(); ++i) {
+                    std::cout << names_[macro_action_seq[i]];
+                    if(i < macro_action_seq.size()-1) std::cout << ", ";
+                }
+                std::cout << '\n';
+
+                return motion_plan;
             }
-            std::cout << '\n';
-
-            return motion_plan;
+        }
+        else {
+            std::cout << "[MAD_RT] Invalid state!" << '\n';
         }
 
         std::chrono::steady_clock::time_point tock = std::chrono::steady_clock::now();
