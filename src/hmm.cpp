@@ -24,7 +24,7 @@ void HMM::UpdateTransitions(const std::vector<size_t>& sequence) {
 }
 
 // Samples a new macro-action given the previous macro-action and the observation heuristic
-size_t HMM::SampleMacroAction(size_t prev, const Eigen::VectorXd& observation_heuristic) {
+size_t HMM::SampleMacroAction(size_t prev, const Eigen::VectorXd& observation_weights) {
     // Make sure index in in-bounds
     if(prev > transition_counts_.rows()) {
         std::cout << "[HMM] Encountered out-of-bounds macro-action type during sampling" << '\n';
@@ -36,7 +36,7 @@ size_t HMM::SampleMacroAction(size_t prev, const Eigen::VectorXd& observation_he
     Eigen::VectorXd transition_probs = transition_counts_.row(prev);
     transition_probs /= transition_probs.sum();
 
-    Eigen::VectorXd observation_probs = observation_heuristic / observation_heuristic.sum();
+    Eigen::VectorXd observation_probs = observation_weights / observation_weights.sum();
 
     Eigen::VectorXd weights = transition_probs.cwiseProduct(observation_probs);
     std::vector<double> std_weights(weights.data(), weights.data() + weights.size());

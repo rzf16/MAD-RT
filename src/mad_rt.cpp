@@ -6,6 +6,7 @@
 #include <limits>
 #include "mad_rt.h"
 #include "state_validity.h"
+#include "observation.h"
 
 MAD_RT::MAD_RT(const std::vector<MacroAction>& macro_actions_in,
                const std::vector<std::string>& names_in,
@@ -52,6 +53,7 @@ MAD_RT::MAD_RT(const std::vector<MacroAction>& macro_actions_in,
 std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
                                           const Eigen::VectorXd& goal,
                                           double max_time) {
+    BlindGreedyHeuristic observation_heuristic(start, goal);
     std::chrono::steady_clock::time_point tick = std::chrono::steady_clock::now();
 
     nodes_.push_back(MAD_RT_Node(std::vector<Eigen::VectorXd>{start},
@@ -83,21 +85,24 @@ std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
         std::cout << "[MAD_RT] Sampled node " << node_id << '\n';
 
         // TODO(rzfeng): actually do this
-        // Eigen::VectorXd observation_heuristic(macro_actions_.size());
-        Eigen::VectorXd observation_heuristic = Eigen::VectorXd::Constant(macro_actions_.size(), 1.0);
+        Eigen::VectorXd observation_weights(macro_actions_.size());
+        for(size_t j = 0; j < macro_actions_.size(); ++j) {
+            observation_weights(j) = observation_heuristic.Compute(nodes_[node_id].action.path.back(),
+                                                                   macro_actions_[j]);
+        }
 
         size_t action_type;
         // Use only observation heuristic if no previous action
         if(nodes_[node_id].parent == std::numeric_limits<size_t>::max()) {
-            std::discrete_distribution<size_t> distribution(observation_heuristic.begin(),
-                                                            observation_heuristic.end());
+            std::discrete_distribution<size_t> distribution(observation_weights.begin(),
+                                                            observation_weights.end());
             action_type = distribution(rng_);
         }
         else {
             // action_type = hmm_.SampleMacroAction(nodes_[nodes_[node_id].parent].action.type,
-            //                                      observation_heuristic);
+            //                                      observation_weights);
             action_type = hmm_.SampleMacroAction(nodes_[node_id].action.type,
-                                                 observation_heuristic);
+                                                 observation_weights);
         }
         // DEBUG
         std::cout << "[MAD_RT] Sampled action " << names_[action_type] << '\n';
