@@ -1,5 +1,5 @@
 # MAD-RT: Macro-Action-Driven Random Trees
-:angry::deciduous_tree:
+:angry::game_die::deciduous_tree:
 
 ## Requirements
 
