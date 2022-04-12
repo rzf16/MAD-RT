@@ -84,12 +84,13 @@ std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
         // DEBUG
         std::cout << "[MAD_RT] Sampled node " << node_id << '\n';
 
-        // TODO(rzfeng): actually do this
         Eigen::VectorXd observation_weights(macro_actions_.size());
         for(size_t j = 0; j < macro_actions_.size(); ++j) {
             observation_weights(j) = observation_heuristic.Compute(nodes_[node_id].action.path.back(),
                                                                    macro_actions_[j]);
         }
+        // Normalize the weights
+        observation_weights = observation_weights / observation_weights.maxCoeff();
 
         size_t action_type;
         // Use only observation heuristic if no previous action
