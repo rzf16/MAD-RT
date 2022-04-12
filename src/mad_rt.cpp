@@ -53,7 +53,7 @@ MAD_RT::MAD_RT(const std::vector<MacroAction>& macro_actions_in,
 std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
                                           const Eigen::VectorXd& goal,
                                           double max_time) {
-    AStarHeuristic observation_heuristic(start, goal);
+    FreedomHeuristic observation_heuristic(start, goal);
     std::chrono::steady_clock::time_point tick = std::chrono::steady_clock::now();
 
     nodes_.push_back(MAD_RT_Node(std::vector<Eigen::VectorXd>{start},
