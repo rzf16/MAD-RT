@@ -53,7 +53,7 @@ MAD_RT::MAD_RT(const std::vector<MacroAction>& macro_actions_in,
 std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
                                           const Eigen::VectorXd& goal,
                                           double max_time) {
-    BlindGreedyHeuristic observation_heuristic(start, goal);
+    AStarHeuristic observation_heuristic(start, goal);
     std::chrono::steady_clock::time_point tick = std::chrono::steady_clock::now();
 
     nodes_.push_back(MAD_RT_Node(std::vector<Eigen::VectorXd>{start},
@@ -148,7 +148,7 @@ std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
             nodes_.push_back(MAD_RT_Node(path, action_type, node_id));
             node_weights_.push_back(1.0);
 
-            if(CalcDistance(path.back(), goal) < goal_eps_) {
+            if(L2(path.back(), goal) < goal_eps_) {
                 std::chrono::steady_clock::time_point tock = std::chrono::steady_clock::now();
                 std::chrono::duration<double> diff = tock - tick;
                 elapsed = diff.count();

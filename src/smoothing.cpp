@@ -28,7 +28,7 @@ void ShortcutSmoother::Smooth(std::vector<Eigen::VectorXd>& path, size_t num_ite
 
 // Step between states a < b
 void ShortcutSmoother::StepBetweenStates(std::vector<Eigen::VectorXd>& path, size_t a, size_t b) {
-    double dist = CalcDistance(path[a], path[b]);
+    double dist = L2(path[a], path[b]);
     Eigen::VectorXd step = ((path[b] - path[a]) / dist) * step_size_;
     size_t num_steps = ceil(dist / step_size_);
 

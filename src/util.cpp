@@ -3,9 +3,14 @@
 #include <Eigen/Dense>
 #include "util.h"
 
-// Computes the distance between two configurations
-double CalcDistance(const Eigen::VectorXd& q1, const Eigen::VectorXd& q2) {
+// Computes the L2 norm between two configurations
+double L2(const Eigen::VectorXd& q1, const Eigen::VectorXd& q2) {
     return (q1 - q2).norm();
+}
+
+// Computes the L1 norm between two configurations
+double L1(const Eigen::VectorXd& q1, const Eigen::VectorXd& q2) {
+    return (q1 - q2).cwiseAbs().sum();
 }
 
 // Prints a path
@@ -24,7 +29,7 @@ void PrintPath(const std::vector<Eigen::VectorXd>&path) {
 double CalcPathLength(const std::vector<Eigen::VectorXd>& path) {
     double length = 0.0;
     for(size_t i = 0; i < path.size()-1; ++i) {
-        length += CalcDistance(path[i+1], path[i]);
+        length += L2(path[i+1], path[i]);
     }
     return length;
 }

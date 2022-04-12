@@ -9,8 +9,11 @@
 
 const size_t kNumDofs = 7;
 
-// Computes the distance between two configurations
-double CalcDistance(const Eigen::VectorXd& q1, const Eigen::VectorXd& q2);
+// Computes the L2 norm between two configurations
+double L2(const Eigen::VectorXd& q1, const Eigen::VectorXd& q2);
+
+// Computes the L1 norm between two configurations
+double L1(const Eigen::VectorXd& q1, const Eigen::VectorXd& q2);
 
 // Prints a path
 void PrintPath(const std::vector<Eigen::VectorXd>&path);
