@@ -61,6 +61,28 @@ std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
                                  std::numeric_limits<size_t>::max()));
     node_weights_.push_back(CalcNodeWeight(nodes_[0]));
 
+    // First try to directly morph all macro-actions to the goal
+    for(const MacroAction& action : macro_actions_) {
+        auto shear_shift = CalcShearShift(action.path, start, goal);
+        auto path = Morph(action.path, shear_shift[0], shear_shift[1]);
+
+        bool valid = true;
+        for(const auto& q : path) {
+            if(!state_validity_checker_->CheckValidity(q)) {
+                valid = false;
+                break;
+            }
+        }
+
+        if(valid) {
+            std::chrono::steady_clock::time_point tock = std::chrono::steady_clock::now();
+            std::chrono::duration<double> diff = tock - tick;
+            std::cout << "[MAD_RT] Found a path in " << diff.count() << " seconds!" << '\n';
+            std::cout << "[MAD_RT] Macro-Action Sequence: " << names_[action.type] << '\n';
+            return path;
+        }
+    }
+
     // While time not exhausted:
     //     Sample a node
     //     Get observation heuristic for current node
