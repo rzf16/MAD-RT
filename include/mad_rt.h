@@ -9,6 +9,7 @@
 #include "hmm.h"
 #include "state_validity.h"
 #include "util.h"
+#include "observation.h"
 
 class MAD_RT {
 public:
@@ -16,6 +17,7 @@ public:
     MAD_RT(const std::vector<MacroAction>& macro_actions_in,
            const std::vector<std::string>& names_in,
            StateValidityChecker* const state_validity_checker_in,
+           ObservationHeuristic* observation_heuristic_in,
            double goal_eps_in=0.01,
            double goal_bias_in=0.05,
            double trunc_min_in=0.4,
@@ -26,6 +28,7 @@ public:
     MAD_RT(const std::vector<MacroAction>& macro_actions_in,
            const std::vector<std::string>& names_in,
            StateValidityChecker* const state_validity_checker_in,
+           ObservationHeuristic* observation_heuristic_in,
            const Eigen::MatrixXd& init_transition_counts,
            double goal_eps_in=0.01,
            double goal_bias_in=0.05,
@@ -75,6 +78,7 @@ private:
     const std::vector<std::string> names_;
 
     StateValidityChecker* const state_validity_checker_;
+    ObservationHeuristic* observation_heuristic_;
 
     // TODO(rzfeng): could be super inefficient, may need to replace with a better data structure
     std::vector<MAD_RT_Node> nodes_;

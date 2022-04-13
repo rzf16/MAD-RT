@@ -2,14 +2,13 @@
 #include "observation.h"
 #include "util.h"
 
-ObservationHeuristic::ObservationHeuristic(const Eigen::VectorXd& start_in,
-                                           const Eigen::VectorXd& goal_in) :
-    start_(start_in), goal_(goal_in) {}
 
-
-UniformHeuristic::UniformHeuristic(const Eigen::VectorXd& start_in,
-                                   const Eigen::VectorXd& goal_in) :
-    ObservationHeuristic(start_in, goal_in) {}
+// Sets the start and goal
+void ObservationHeuristic::SetProblem(const Eigen::VectorXd& start_in,
+                                      const Eigen::VectorXd& goal_in) {
+    start_ = start_in;
+    goal_ = goal_in;
+}
 
 
 // Computes the uniform heuristic for a configuration and macro-action
@@ -18,11 +17,7 @@ double UniformHeuristic::Compute(const Eigen::VectorXd& q, const MacroAction& ac
 }
 
 
-BlindGreedyHeuristic::BlindGreedyHeuristic(const Eigen::VectorXd& start_in,
-                                           const Eigen::VectorXd& goal_in,
-                                           double power_in) :
-    ObservationHeuristic(start_in, goal_in), power_(power_in) {}
-
+BlindGreedyHeuristic::BlindGreedyHeuristic(double power_in) : power_(power_in) {}
 
 
 // Computes the blind greedy heuristic for a configuration and macro-action
@@ -34,10 +29,8 @@ double BlindGreedyHeuristic::Compute(const Eigen::VectorXd& q, const MacroAction
 }
 
 
-AStarHeuristic::AStarHeuristic(const Eigen::VectorXd& start_in,
-                               const Eigen::VectorXd& goal_in,
-                               double power_in, double weight_in) :
-    ObservationHeuristic(start_in, goal_in), power_(power_in), weight_(weight_in) {}
+AStarHeuristic::AStarHeuristic(double power_in, double weight_in) :
+    power_(power_in), weight_(weight_in) {}
 
 
 // Computes the A* heuristic for a configuration and macro-action
@@ -49,12 +42,9 @@ double AStarHeuristic::Compute(const Eigen::VectorXd& q, const MacroAction& acti
 }
 
 
-FreedomHeuristic::FreedomHeuristic(const Eigen::VectorXd& start_in,
-                                   const Eigen::VectorXd& goal_in,
-                                   // TODO(tweiheng): pass in pointer to planning scene
-                                   double freedom_weight_in) :
-    ObservationHeuristic(start_in, goal_in), freedom_weight_(freedom_weight_in) {}
-
+// TODO(tweiheng): pass in pointer to planning scene
+FreedomHeuristic::FreedomHeuristic(double freedom_power_in, double goal_power_in) :
+    freedom_power_(freedom_power_in), goal_power_(goal_power_in) {}
 
 
 // Computes the freedom heuristic for a configuration and macro-action
@@ -62,5 +52,5 @@ double FreedomHeuristic::Compute(const Eigen::VectorXd& q, const MacroAction& ac
     Eigen::VectorXd new_q = q + (action.path.back() - action.path.front());
     double obs_dist = 1.0; // TODO(tweiheng): get obstacle distance with the planning scene pointer
     double dist = L2(new_q, goal_);
-    return (freedom_weight_ * obs_dist) / dist;
+    return pow(obs_dist, freedom_power_) / pow(dist, goal_power_);
 }

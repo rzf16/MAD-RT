@@ -11,6 +11,7 @@
 #include "util.h"
 #include "smoothing.h"
 #include "state_validity.h"
+#include "observation.h"
 
 const std::string MACRO_ACTION_DIR = "config/macro_actions/";
 
@@ -66,8 +67,9 @@ int main() {
     // TODO(tweiheng): initialize MoveIt stuff
     // TODO(tweiheng): initialize a StateValidityChecker
     StateValidityChecker state_validity_checker;
+    FreedomHeuristic observation_heuristic;
 
-    MAD_RT planner(macro_actions, names, &state_validity_checker);
+    MAD_RT planner(macro_actions, names, &state_validity_checker, &observation_heuristic);
 
     Eigen::VectorXd start(7);
     start << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;

@@ -11,6 +11,7 @@
 MAD_RT::MAD_RT(const std::vector<MacroAction>& macro_actions_in,
                const std::vector<std::string>& names_in,
                StateValidityChecker* const state_validity_checker_in,
+               ObservationHeuristic* observation_heuristic_in,
                double goal_eps_in,
                double goal_bias_in,
                double trunc_min_in,
@@ -20,6 +21,7 @@ MAD_RT::MAD_RT(const std::vector<MacroAction>& macro_actions_in,
               : macro_actions_(macro_actions_in),
                 names_(names_in),
                 state_validity_checker_(state_validity_checker_in),
+                observation_heuristic_(observation_heuristic_in),
                 hmm_(HMM(macro_actions_in.size())),
                 goal_eps_(goal_eps_in),
                 goal_bias_(goal_bias_in),
@@ -31,6 +33,7 @@ MAD_RT::MAD_RT(const std::vector<MacroAction>& macro_actions_in,
 MAD_RT::MAD_RT(const std::vector<MacroAction>& macro_actions_in,
                const std::vector<std::string>& names_in,
                StateValidityChecker* const state_validity_checker_in,
+               ObservationHeuristic* observation_heuristic_in,
                const Eigen::MatrixXd& init_transition_counts,
                double goal_eps_in,
                double goal_bias_in,
@@ -41,6 +44,7 @@ MAD_RT::MAD_RT(const std::vector<MacroAction>& macro_actions_in,
               : macro_actions_(macro_actions_in),
                 names_(names_in),
                 state_validity_checker_(state_validity_checker_in),
+                observation_heuristic_(observation_heuristic_in),
                 hmm_(HMM(macro_actions_in.size(), init_transition_counts)),
                 goal_eps_(goal_eps_in),
                 goal_bias_(goal_bias_in),
@@ -53,7 +57,7 @@ MAD_RT::MAD_RT(const std::vector<MacroAction>& macro_actions_in,
 std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
                                           const Eigen::VectorXd& goal,
                                           double max_time) {
-    FreedomHeuristic observation_heuristic(start, goal);
+    observation_heuristic_->SetProblem(start, goal);
     std::chrono::steady_clock::time_point tick = std::chrono::steady_clock::now();
 
     nodes_.push_back(MAD_RT_Node(std::vector<Eigen::VectorXd>{start},
@@ -108,8 +112,8 @@ std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
 
         Eigen::VectorXd observation_weights(macro_actions_.size());
         for(size_t j = 0; j < macro_actions_.size(); ++j) {
-            observation_weights(j) = observation_heuristic.Compute(nodes_[node_id].action.path.back(),
-                                                                   macro_actions_[j]);
+            observation_weights(j) = observation_heuristic_->Compute(nodes_[node_id].action.path.back(),
+                                                                     macro_actions_[j]);
         }
         // Normalize the weights
         observation_weights = observation_weights / observation_weights.maxCoeff();
@@ -159,6 +163,7 @@ std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
         }
 
         bool valid = true;
+        // TODO(rzfeng): check with interpolation
         for(const auto& q : path) {
             if(!state_validity_checker_->CheckValidity(q)) {
                 valid = false;
