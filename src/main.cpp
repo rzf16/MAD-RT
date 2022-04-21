@@ -8,6 +8,7 @@
 #include <Eigen/Dense>
 #include <ctime>
 #include "mad_rt.h"
+#include "bimad_rt.h"
 #include "util.h"
 #include "smoothing.h"
 #include "state_validity.h"
@@ -69,7 +70,7 @@ int main() {
     StateValidityChecker state_validity_checker;
     FreedomHeuristic observation_heuristic;
 
-    MAD_RT planner(macro_actions, names, &state_validity_checker, &observation_heuristic);
+    BiMAD_RT planner(macro_actions, names, &state_validity_checker, &observation_heuristic);
 
     Eigen::VectorXd start(7);
     start << 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0;
@@ -81,7 +82,7 @@ int main() {
     std::cout << "Unsmoothed length: " << CalcPathLength(path) << '\n';
 
     ShortcutSmoother smoother(&state_validity_checker);
-    smoother.Smooth(path);
+    // smoother.Smooth(path);
     std::cout << "Smoothed length: " << CalcPathLength(path) << '\n';
 
     PrintPath(path);

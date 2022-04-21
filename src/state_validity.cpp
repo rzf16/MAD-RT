@@ -7,5 +7,6 @@ StateValidityChecker::StateValidityChecker() {}
 // Checks if a configuration is valid
 bool StateValidityChecker::CheckValidity(const Eigen::VectorXd& q) {
     // TODO(tweiheng): check validity (collisions + joint limits) using MoveIt
-    return true;
+    // return true;
+    return q[0] > -0.1 && q[0] < 1.2;
 }
