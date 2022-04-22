@@ -25,6 +25,7 @@ void NNStruct::Add(const Eigen::VectorXd& pt, size_t id) {
             pts.push_back(pt);
         }
         tree_ = KDTree(pts);
+        tree_initialized_ = true;
         overflow_.clear();
     }
 }
