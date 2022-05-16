@@ -1,8 +1,6 @@
-cmake_minimum_required(VERSION 3.10)
+add_executable(mad_rt src/main.cpp src/hmm.cpp src/mad_rt.cpp src/smoothing.cpp src/state_validity.cpp src/util.cpp src/observation.cpp src/bimad_rt.cpp src/kd_tree.cpp src/nn_struct.cpp)
+include_directories(include)
+target_link_libraries(mad_rt ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+install(TARGETS mad_rt DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../bin)
-
-project(MAD-RT)
-add_subdirectory(src)
+install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

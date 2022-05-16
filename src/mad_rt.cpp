@@ -103,12 +103,12 @@ std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
     size_t i = 0;
     while(elapsed < max_time) {
         // DEBUG
-        std::cout << "[MAD_RT] Iteration " << i++ << '\n';
-        std::cout << "[MAD_RT] " << nodes_.size() << " nodes in tree" << '\n';
+        // std::cout << "[MAD_RT] Iteration " << i++ << '\n';
+        // std::cout << "[MAD_RT] " << nodes_.size() << " nodes in tree" << '\n';
 
         size_t node_id = SampleNode();
         // DEBUG
-        std::cout << "[MAD_RT] Sampled node " << node_id << '\n';
+        // std::cout << "[MAD_RT] Sampled node " << node_id << '\n';
 
         Eigen::VectorXd observation_weights(macro_actions_.size());
         for(size_t j = 0; j < macro_actions_.size(); ++j) {
@@ -121,8 +121,8 @@ std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
         size_t action_type;
         // Use only observation heuristic if no previous action
         if(nodes_[node_id].parent == std::numeric_limits<size_t>::max()) {
-            std::discrete_distribution<size_t> distribution(observation_weights.begin(),
-                                                            observation_weights.end());
+            std::discrete_distribution<size_t> distribution(observation_weights.data(),
+                                                            observation_weights.data() + observation_weights.size());
             action_type = distribution(rng_);
         }
         else {
@@ -132,13 +132,13 @@ std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
                                                  observation_weights);
         }
         // DEBUG
-        std::cout << "[MAD_RT] Sampled action " << names_[action_type] << '\n';
+        // std::cout << "[MAD_RT] Sampled action " << names_[action_type] << '\n';
 
         std::vector<Eigen::VectorXd> path;
         bool sample_goal = ((double)rand() / (double)RAND_MAX) < goal_bias_;
         if(sample_goal) {
             // DEBUG
-            std::cout << "[MAD_RT] Targeting goal" << '\n';
+            // std::cout << "[MAD_RT] Targeting goal" << '\n';
 
             auto shear_shift = CalcShearShift(macro_actions_[action_type].path,
                                               nodes_[node_id].action.path.back(),
@@ -147,7 +147,7 @@ std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
         }
         else {
             // DEBUG
-            std::cout << "[MAD_RT] Expanding tree" << '\n';
+            // std::cout << "[MAD_RT] Expanding tree" << '\n';
 
             // Truncate macro-action
             std::uniform_real_distribution<double> distribution(trunc_min_, trunc_max_);
@@ -210,13 +210,13 @@ std::vector<Eigen::VectorXd> MAD_RT::plan(const Eigen::VectorXd& start,
             }
         }
         else {
-            std::cout << "[MAD_RT] Invalid state!" << '\n';
+            // std::cout << "[MAD_RT] Invalid state!" << '\n';
         }
 
         std::chrono::steady_clock::time_point tock = std::chrono::steady_clock::now();
         std::chrono::duration<double> diff = tock - tick;
         elapsed = diff.count();
-        std::cout << '\n';
+        // std::cout << '\n';
     }
 
     std::cout << "[MAD-RT] Failed to find a path D:" << '\n';

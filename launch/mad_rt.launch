@@ -1,0 +1,6 @@
+<launch>
+
+  <node name="mad_rt" pkg="moveit_tutorials" type="mad_rt" respawn="false" output="screen">
+  </node>
+
+</launch>
