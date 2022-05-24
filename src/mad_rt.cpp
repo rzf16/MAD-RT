@@ -230,15 +230,30 @@ std::vector<Eigen::VectorXd> MAD_RT::Morph(const std::vector<Eigen::VectorXd>& p
                                            const Eigen::VectorXd& shift) const {
     std::vector<Eigen::VectorXd> morphed;
     for(size_t i = 0; i < path.size(); ++i) {
-        // TODO(rzfeng): clamp radians
         double t = double(i) / double(path.size()-1);
         Eigen::VectorXd q = path[i] + t*shear + shift;
-        for(size_t i = 0; i < q.size(); ++i) {
-            q(i) = ClampRadians(q(i));
+        for(size_t j = 0; j < q.size(); ++j) {
+            q(j) = ClampRadians(q(j));
         }
         morphed.push_back(q);
     }
-    return morphed;
+
+    // Interpolate
+    std::vector<Eigen::VectorXd> interpolated;
+    for(size_t i = 0; i < path.size()-1; ++i) {
+        Eigen::VectorXd diff = morphed[i+1] - morphed[i];
+        Eigen::VectorXd step = (diff / diff.norm()) * 0.1;
+        size_t num_steps = diff.norm() / 0.1;
+        for(size_t j = 0; j < num_steps; ++j) {
+            if(j != num_steps-1) {
+                interpolated.push_back(morphed[i] + step * j);
+            }
+            else {
+                interpolated.push_back(morphed[i+1]);
+            }
+        }
+    }
+    return interpolated;
 }
 
 // Samples a shear coefficient and computes a shift coefficient
