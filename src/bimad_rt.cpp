@@ -394,11 +394,14 @@ std::vector<Eigen::VectorXd> BiMAD_RT::Morph(const std::vector<Eigen::VectorXd>&
     std::vector<Eigen::VectorXd> interpolated;
     for(size_t i = 0; i < morphed.size()-1; ++i) {
         Eigen::VectorXd diff = morphed[i+1] - morphed[i];
-        double step_size = 0.1;
+        double step_size = 0.2;
         Eigen::VectorXd step = (diff / diff.norm()) * step_size;
-        size_t num_steps = floor(diff.norm() / step_size);
+        size_t num_steps = ceil(diff.norm() / step_size);
+
+        Eigen::VectorXd current = morphed[i];
         for(size_t j = 0; j < num_steps; ++j) {
-            interpolated.push_back(morphed[i] + step * j);
+            interpolated.push_back(current);
+            current = current + step;
         }
     }
     interpolated.push_back(morphed.back());
